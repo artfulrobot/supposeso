@@ -12,10 +12,21 @@ function supposeso_menu() {
     'page callback'    => 'drupal_get_form',
     'page arguments'   => ['supposeso__form_settings'],
     'access arguments' => ['administer content'],
-    'type'             => MENU_CALLBACK,
     ]
   ];
   return $items;
+}
+
+/**
+ */
+function supposeso_preprocess_page(&$variables) {
+  global $user;
+  if ($user != 1) return;
+
+  // nope: $variables['#attached']['js']...
+  // nope: $variables['page']['#attached']['js']...
+  drupal_add_js(drupal_get_path('module', 'supposeso') . '/js/supposeso.js');
+  drupal_add_js(['supposeso' => supposeso()->getClientConfig()], 'setting');
 }
 
 /**
@@ -27,7 +38,6 @@ function supposeso__form_settings($form, &$form_state) {
 
   $supposeso = supposeso();
 
-  /*
   $form['banner_text'] = [
     '#type'          => 'text_format',
     '#rows'          => 4,
@@ -35,7 +45,6 @@ function supposeso__form_settings($form, &$form_state) {
     '#default_value' => $supposeso->getBannerText(),
     '#format'        => $supposeso->getBannerTextFormat(),
   ];
-   */
 
   $form['main_config'] = [
     '#type'          => 'hidden',
@@ -49,6 +58,17 @@ function supposeso__form_settings($form, &$form_state) {
   ];
 
   return $form;
+}
+
+/**
+ * Form for settings.
+ */
+function supposeso__form_settings_submit($form, &$form_state) {
+  $config = json_decode($form_state['values']['main_config'], TRUE);
+  $config['bannerText'] = $form_state['values']['banner_text']['value'];
+  $config['bannerTextFormat'] = $form_state['values']['banner_text']['format'];
+  supposeso()->saveConfig($config);
+  $form_state['redirect'] = '/admin/config/supposeso';
 }
 
 // Utility.
@@ -83,7 +103,7 @@ class SupposeSo {
    * Constructor
    */
   public function __construct() {
-    $this->config = $this->validateConfig(variable_get('supposeso_config'));
+    $this->config = $this->validateConfig(unserialize(variable_get('supposeso_config')));
   }
 
   /**
@@ -96,17 +116,34 @@ class SupposeSo {
   public function validateConfig($config) {
     if (!is_array($config)) {
       return [
-        'permissions' => ['essential'],
-        'buttons' => [
+        'bannerText'       => '<p>Cookie information</p>',
+        'bannerTextFormat' => 'filtered_html',
+        'permissions'      => ['essential'],
+        'buttons'          => [
           [
-            'text' => 'Essential Only',
-            'cssClass' => 'secondary',
+            'text'        => 'Essential Only',
+            'cssClass'    => 'secondary',
             'permissions' => ['essential'],
           ],
         ],
       ];
     }
-    $this->config = $config;
+
+    $config['permissions'] = array_filter($config['permissions'], function ($p) {
+      return (preg_match('/^[a-zA-Z0-9_]+$/', $p));
+    });
+
+    foreach ($config['buttons'] as $i => $button) {
+      $button['permissions'] = array_filter($button['permissions'], function ($p) use ($config) {
+        return in_array($p, $config['permissions']);
+      });
+      $button['text'] = strip_tags($button['text']);
+      $button['cssClass'] = preg_replace('/[a-zA-Z0-9_-]+/', '-', $button['cssClass']);
+    }
+
+    $config = array_intersect_key($config, array_fill_keys(['buttons', 'permissions', 'bannerText', 'bannerTextFormat'], NULL));
+
+    return $config;
   }
 
   /**
@@ -115,6 +152,17 @@ class SupposeSo {
    */
   public function getConfigJson() {
     return json_encode($this->config);
+  }
+
+  /**
+   * Returns config for browser
+   *
+   * @return array
+   */
+  public function getClientConfig() {
+    $config['buttons'] = $this->config['buttons'];
+    $config['text'] = check_markup($this->config['bannerText'], $this->config['bannerTextFormat']);
+    return $config;
   }
 
   /**
@@ -129,5 +177,14 @@ class SupposeSo {
    */
   public function getBannerTextFormat() {
     return $this->config['bannerTextFormat'] ?? 'filtered_html';
+  }
+  /**
+   * validate and save config.
+   *
+   * @param array $config
+   */
+  public function saveConfig($config) {
+    $this->config = $this->validateConfig($config);
+    variable_set('supposeso_config', serialize($this->config));
   }
 }
