@@ -99,6 +99,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     deleteCookie() {
       document.cookie = "ssCookieConsent=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+      this.acceptedPermissions = [];
       console.log("The ssCookieConsent cookie has been expired and will be deleted by your browser.");
 
       const ourEvent = new Event('supposeso');
