@@ -1,0 +1,78 @@
+<script src="https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.x.x/dist/alpine.js" defer></script>
+
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js" defer></script>
+<script defer>
+  //document.addEventListener('DOMContentLoaded', () => { });
+  var configInput;
+   function supposeSoConfigData() {
+     configInput = document.querySelector('input[name="main_config"]');
+     configInput.type="text";
+     configInput.style.backgroundColor = "#eee";
+     console.log({configInput});
+     var alpineData = {} /*config*/;
+     alpineData.configInput = configInput;
+     alpineData.addPermission = (button, perm) => {
+       if (button.indexOf(perm) === -1) {
+         button.push(perm);
+       }
+     };
+     console.log(alpineData);
+     return alpineData;
+   }
+ </script>
+<style>
+.supposeso input[type="text"] {
+  border: solid 1px #eee;
+  padding: 0.25rem 0.5rem;
+  margin-right: 1rem;
+}
+</style>
+
+ <div x-data="supposeSoConfigData()" class="supposeso">
+
+  <!-- First we define short string names of permissions -->
+  <h2>Permission names</h2>
+  <template x-for="perm, i in permissions" :key="i">
+    <div>
+      <input x-model="permissions[i]" type="text" style="border:solid 1px #ccc;" />
+    </div>
+  </template>
+  <button @click.prevent="permissions.push('')" >Add Permission</button>
+
+  <h2>Permission buttons</h2>
+  <template x-for="button, j in buttons" :key="j">
+    <div>
+      <label :for="'btnText' + j" >Button text</label>
+      <input :id="'btnText' + j"  x-model="button.text" type="text" />
+      <label :for="'btnClass' + j" >Button class</label>
+      <input :id="'btnClass' + j"  x-model="button.cssClass" type="text" />
+
+      <div :x-data="{buttons: buttons, permissions:permissions}">
+        <!--
+          <template x-for="p in permissions.map(perm => ({perm, button}))" :key="p.perm" >
+          <div>
+          <input type="checkbox" @input="addPermission(p.button, p.perm)" :value="p.button.permissions.indexOf(p.perm)>-1" />
+          </div>
+          </template>
+          -->
+      </div>
+    </div>
+  </template>
+  <button @click.prevent="buttons.push({text: 'Essential', 'cssClass': ''})" >Add Button</button>
+
+  <pre x-text="configInput.value = JSON.stringify({permissions, buttons});" ></pre>
+
+  <hr/>
+  <h2>Permission buttons</h2>
+  <!--
+  <template x-for="button, j in buttons" :key="j">
+    <div>
+      <label :for="'btnText' + j" >Button text</label>
+      <input :id="'btnText' + j"  x-model="buttons[j].text" type="text" />
+      <label :for="'btnClass' + j" >Button class</label>
+
+      <input :id="'btnClass' + j"  x-model="buttons[j].cssClass" type="text" />
+    </div>
+  </template>
+  -->
+ </div>

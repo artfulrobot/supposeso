@@ -1,0 +1,133 @@
+<?php
+
+/**
+ * Implements hook_menu
+ *
+ * @return array
+ */
+function supposeso_menu() {
+  $items = [
+    'admin/config/supposeso' => [
+    'title'            => 'Suppose So Settings',
+    'page callback'    => 'drupal_get_form',
+    'page arguments'   => ['supposeso__form_settings'],
+    'access arguments' => ['administer content'],
+    'type'             => MENU_CALLBACK,
+    ]
+  ];
+  return $items;
+}
+
+/**
+ * Form for settings.
+ */
+function supposeso__form_settings($form, &$form_state) {
+  $html = file_get_contents(__DIR__ . '/templates/settings.tpl.html');
+  $html = str_replace('{} /*config*/', supposeso()->getConfigJson(), $html);
+
+  $supposeso = supposeso();
+
+  /*
+  $form['banner_text'] = [
+    '#type'          => 'text_format',
+    '#rows'          => 4,
+    '#title'         => 'Banner text',
+    '#default_value' => $supposeso->getBannerText(),
+    '#format'        => $supposeso->getBannerTextFormat(),
+  ];
+   */
+
+  $form['main_config'] = [
+    '#type'          => 'hidden',
+    '#default_value' => $supposeso->getConfigJson(),
+    '#suffix'        => $html,
+  ];
+
+  $form['submit'] = [
+    '#type'  => 'submit',
+    '#value' => 'Save',
+  ];
+
+  return $form;
+}
+
+// Utility.
+/**
+ * Sugar access
+ *
+ * @return SupposeSo
+ */
+function supposeso() {
+  return SupposeSo::singleton();
+}
+
+class SupposeSo {
+
+  /** @var SupposeSo Holds singleton. */
+  protected static $singleton;
+
+  /** @var array */
+  protected $config;
+
+  /**
+   * Return singleton.
+   */
+  public function singleton() {
+    if (!isset(static::$singleton)) {
+      static::$singleton = new static();
+    }
+    return static::$singleton;
+  }
+
+  /**
+   * Constructor
+   */
+  public function __construct() {
+    $this->config = $this->validateConfig(variable_get('supposeso_config'));
+  }
+
+  /**
+   * Ensure given config is valid.
+   * @todo
+   *
+   * @param array $config
+   * @return array
+   */
+  public function validateConfig($config) {
+    if (!is_array($config)) {
+      return [
+        'permissions' => ['essential'],
+        'buttons' => [
+          [
+            'text' => 'Essential Only',
+            'cssClass' => 'secondary',
+            'permissions' => ['essential'],
+          ],
+        ],
+      ];
+    }
+    $this->config = $config;
+  }
+
+  /**
+   * Returns config as json encoded string.
+   * @return string
+   */
+  public function getConfigJson() {
+    return json_encode($this->config);
+  }
+
+  /**
+   * @return string;
+   */
+  public function getBannerText() {
+    return $this->config['bannerText'] ?? '';
+  }
+
+  /**
+   * @return string;
+   */
+  public function getBannerTextFormat() {
+    return $this->config['bannerTextFormat'] ?? 'filtered_html';
+  }
+}
