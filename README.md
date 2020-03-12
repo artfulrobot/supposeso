@@ -49,6 +49,7 @@ if (window.supposeSo) {
 }
 // In case it loads after us, wait to hear from it.
 document.addEventListener('supposeso', initGoogleAnalytics);
+
 ```
 
 Note about the `supposeso` event: It has the following properties set in the
@@ -57,3 +58,11 @@ respective situations:
 - `userGrantedConsent`: user just clicked one of the consent buttons.
 - `userRevokedPermission`: user just deleted the cookie.
 - `previouslyGranted`: permissions loaded from cookie (when SupposeSo is loaded)
+
+## Revoking permissions
+
+You can include `<a href='#ss-clear-cookies'>Delete cookies</a>`. This
+will delete the `ssCookieConsent` cookie and it will fire a `supposeso`
+event witih `userRevokedPermission` set. It will then ask the user to
+`confirm()` if they want to reload the page. You should use this to delete
+cookies that were set with permission.

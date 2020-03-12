@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
       this.config = config;
       const c = this.getCookie('ssCookieConsent');
       this.acceptedPermissions = c ? c.split(',') : [];
+      document.addEventListener('click', this.clickHandler.bind(this));
     }
     init() {
       if (this.acceptedPermissions.length === 0) {
@@ -100,12 +101,27 @@ document.addEventListener('DOMContentLoaded', () => {
     deleteCookie() {
       document.cookie = "ssCookieConsent=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
       this.acceptedPermissions = [];
-      console.log("The ssCookieConsent cookie has been expired and will be deleted by your browser.");
+      console.log("The ssCookieConsent cookie has been expired and will be deleted by your browser. You may need to reload this page now.");
 
       const ourEvent = new Event('supposeso');
       ourEvent.userRevokedPermission = true;
       ourEvent.supposeSo = this;
       document.dispatchEvent(ourEvent);
+      this.show();
+    }
+    clickHandler(e) {
+      if (e && e.target && e.target.tagName === 'A'
+        && e.target.hash && e.target.hash === '#ss-clear-cookies') {
+
+        e.preventDefault && e.preventDefault();
+        e.stopPropagation && e.stopPropagation();
+
+        this.deleteCookie();
+        if (confirm("Cookie deleted. You may need to reload the page for this to have effect. Reload now?")) {
+          location.reload();
+        }
+      }
+
     }
   }
 
