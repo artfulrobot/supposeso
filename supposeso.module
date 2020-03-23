@@ -20,9 +20,6 @@ function supposeso_menu() {
 /**
  */
 function supposeso_preprocess_page(&$variables) {
-  global $user;
-  if ($user != 1) return;
-
   // nope: $variables['#attached']['js']...
   // nope: $variables['page']['#attached']['js']...
   drupal_add_js(drupal_get_path('module', 'supposeso') . '/js/supposeso.js');
@@ -92,7 +89,7 @@ class SupposeSo {
   /**
    * Return singleton.
    */
-  public function singleton() {
+  public static function singleton() {
     if (!isset(static::$singleton)) {
       static::$singleton = new static();
     }
