@@ -20,10 +20,20 @@ function supposeso_menu() {
 /**
  */
 function supposeso_preprocess_page(&$variables) {
+
+  $publicConfig = supposeso()->getClientConfig();
+  $p = current_path();
+  foreach (($publicConfig['excludePaths'] ?? []) as $pattern) {
+    if ($pattern && fnmatch($pattern, $p)) {
+      // Matched an exclude. Do nothing.
+      return;
+    }
+  }
+
   // nope: $variables['#attached']['js']...
   // nope: $variables['page']['#attached']['js']...
   drupal_add_js(drupal_get_path('module', 'supposeso') . '/js/supposeso.js');
-  drupal_add_js(['supposeso' => supposeso()->getClientConfig()], 'setting');
+  drupal_add_js(['supposeso' => $config], 'setting');
 }
 
 /**
@@ -111,8 +121,7 @@ class SupposeSo {
    * @return array
    */
   public function validateConfig($config) {
-    if (!is_array($config)) {
-      return [
+    $defaults = [
         'bannerText'       => '<p>Cookie information</p>',
         'bannerTextFormat' => 'filtered_html',
         'permissions'      => ['essential'],
@@ -123,7 +132,11 @@ class SupposeSo {
             'permissions' => ['essential'],
           ],
         ],
+        'excludePaths'    => [],
       ];
+
+    if (!is_array($config)) {
+      return $defaults;
     }
 
     $config['permissions'] = array_filter($config['permissions'], function ($p) {
@@ -138,7 +151,9 @@ class SupposeSo {
       $button['cssClass'] = preg_replace('/[a-zA-Z0-9_-]+/', '-', $button['cssClass']);
     }
 
-    $config = array_intersect_key($config, array_fill_keys(['buttons', 'permissions', 'bannerText', 'bannerTextFormat'], NULL));
+    $config = array_intersect_key($config, array_fill_keys(['buttons', 'permissions', 'bannerText', 'bannerTextFormat', 'excludePaths'], NULL));
+
+    $config += $defaults;
 
     return $config;
   }

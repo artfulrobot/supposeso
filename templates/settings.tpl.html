@@ -8,7 +8,12 @@
     new Vue({
       el: '#supposeSoUi',
       data: function() {
+        // PHP replaces this next line, injecting the actual config object.
         var d = {} /*config*/;
+
+        // Implode the excludePaths to a string.
+        d.excludePaths = d.excludePaths.join("\n");
+
         console.log("config", d);
         return d;
       },
@@ -28,7 +33,9 @@
       computed: {
         jsonOutput() {
           // Sync the json in the hidden field.
-          configInput.value = JSON.stringify({permissions: this.permissions, buttons: this.buttons});
+          const v = {permissions: this.permissions, buttons: this.buttons};
+          v.excludePaths = this.excludePaths.split(/[\r\n]+/).map(p => p.replace(/^\s*(.*?)\s*$/, '$1')).filter(p => p.length > 0);
+          configInput.value = JSON.stringify(v);
         }
       }
 
@@ -66,6 +73,14 @@
     </div>
   </div>
   <button @click.prevent="buttons.push({text: '', 'cssClass': '', permissions: ['essential']})" >Add Button</button>
+
+  <h2>Paths to exclude (optional)</h2>
+  <p>Enter paths you'd like to exclude, one per line. Use * for wildcard. This goes on paths, not path aliases.</p>
+  <textarea
+    v-model="excludePaths"
+    rows=6
+    cols=60
+    ></textarea>
 
   <!-- This uses a computed property to sync the external hidden input value -->
   <span :x="jsonOutput" ></span>
