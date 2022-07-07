@@ -1,6 +1,0 @@
-name = supposeso
-description = "Cookie consent handling"
-core = 7.x
-
-files[] = supposeso.module
-
